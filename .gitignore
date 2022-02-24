@@ -1,0 +1,12 @@
+# NO *.txt AND *.jpg files due to file with confidential info
+
+*.txt
+*.jpg
+
+
+# Don't want to upload data or large files
+
+*.zip
+*.mp4
+
+*.csv
