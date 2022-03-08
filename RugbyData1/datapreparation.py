@@ -21,10 +21,20 @@ class GameData:
         self.h2_start = h2_start
         self.h1_end = h1_end
         self.h2_end = h2_end
-        self.dfs = []
+        self.dfs = {}
 
-    def store_df_features(self, name, df):
-        self.dfs.append({name: df.columns})
+    def store_df_features(self, name, cols):
+        self.dfs[name] = cols
+
+    def print_df_features(self):
+        for key, value in self.dfs.items():
+            print(f"df name: {key} -> {value}")
+
+    def unix_to_gametime(self, time, half):
+        if half == 1:
+            return time - self.h1_start
+        else:
+            return time - self.h1_end
 
 
 # %% LOADING DATA INTO SCRIPT
@@ -37,12 +47,23 @@ def load_to_dask_df(csvfile, partitions=4, header=0, index_col=None):
 # %% BASIC DATA PREPARATION OPERATIONS
 
 def split_into_halves(gamedata, full_game_dd):
-    h1_dd = full_game_dd[
-                            full_game_dd["cs_time_unix"] >= gamedata.h1_start or
-                            full_game_dd["cs_time_unix"] <= gamedata.h1_end
-                            ]
-    h2_dd = full_game_dd[
-                            full_game_dd["cs_time_unix"] >= gamedata.h2_start or
-                            full_game_dd["cs_time_unix"] <= gamedata.h2_end
-                            ]
-    return h1_dd, h2_dd
+    # half1_by_time = lambda df: df["cs_time_unix"] <= (gamedata.h1_end*100)
+    # half2_by_time = lambda df: df["cs_time_unix"] >= (gamedata.h2_start*100)
+
+    # Split AT the half
+    h1_dd = full_game_dd.loc[full_game_dd["cs_time_unix"] >= (gamedata.h1_end*100), :]
+    h2_dd = full_game_dd.loc[full_game_dd["cs_time_unix"] >= (gamedata.h2_start*100), :]
+
+    return (h1_dd.loc[h1_dd["cs_time_unix"] >= (gamedata.h1_start*100), :],
+            h2_dd.loc[h2_dd["cs_time_unix"] <= (gamedata.h2_end*100), :])
+
+
+# %% RANDOM FUNCTION FOR HANDLING COMMON OPERATIONS
+
+def centiseconds_to_clock(time_in_cs):
+    time_ms = time_in_cs * 10
+    ms = time_ms % 1000
+    time_sec = time_ms // 1000
+    sec = time_sec % 60
+    minutes = time_sec // 60
+    return minutes, sec, ms
