@@ -34,7 +34,7 @@ class GameData:
         if half == 1:
             return time - self.h1_start
         else:
-            return time - self.h1_end
+            return time - self.h2_start
 
 
 # %% LOADING DATA INTO SCRIPT
@@ -51,12 +51,15 @@ def split_into_halves(gamedata, full_game_dd):
     # half2_by_time = lambda df: df["cs_time_unix"] >= (gamedata.h2_start*100)
 
     # Split AT the half
-    h1_dd = full_game_dd.loc[full_game_dd["cs_time_unix"] >= (gamedata.h1_end*100), :]
+    h1_dd = full_game_dd.loc[full_game_dd["cs_time_unix"] <= (gamedata.h1_end*100), :]
     h2_dd = full_game_dd.loc[full_game_dd["cs_time_unix"] >= (gamedata.h2_start*100), :]
 
-    return (h1_dd.loc[h1_dd["cs_time_unix"] >= (gamedata.h1_start*100), :],
-            h2_dd.loc[h2_dd["cs_time_unix"] <= (gamedata.h2_end*100), :])
+    # For debugging... FIXED IT I THINK
+    #print(h1_dd.head())
+    #print(h2_dd.head())
 
+    return (h1_dd.loc[h1_dd["cs_time_unix"] >= (gamedata.h1_start*100), :].compute().reset_index(drop=True),
+            h2_dd.loc[h2_dd["cs_time_unix"] <= (gamedata.h2_end*100), :].compute().reset_index(drop=True))
 
 # %% RANDOM FUNCTION FOR HANDLING COMMON OPERATIONS
 
